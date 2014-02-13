@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+"""Reads splot.log file from IRAF to create master csv linelist
+
+splot.log should be the result of many EW measurements
+file_in: your splot.log file
+template: a line list in MOOG format that will be used as template to search
+for values in splot.log file
+file_out: a csv file with the results of the search
+window=0.1: wavelength window to look for lines (0.1 A is the default)
+"""
+__author__ = 'Ivan Ramirez (UT Austin)'
+__email__ = 'ivan@astro.as.utexas.edu'
+
+
+import logging
+import numpy as np
+from astropy.io import ascii
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
+def main(file_in, template, file_out, window=0.1):
+    logger.info('Reading input file: '+file_in)
+    f = open(file_in, 'r')
+    sp, ww, ew = [], [], []
+    for line in f.readlines():
+        if '[' in line:
+            xi = line.rfind('/')+1
+            if xi == 0:
+                xi = line.rfind('[')+1
+            line = line.replace(".fits", "")
+            xf = line.find(']')
+            spectrum = line[xi:xf]
+        if len(line) > 1 and line[4:10] != 'center' and '[' not in line \
+           and line.replace(" ", "") != "\n":
+                sp.append(spectrum)
+                ww.append(float(line[0:10].strip(' ')))
+                ew.append(float(line[33:40].strip(' ')))
+    f.close()
+
+    x = ascii.read(template, Reader=ascii.FixedWidth)
+
+    stars = sorted(set(sp))
+    f = open(file_out, 'w')
+    f.write('wavelength,species,ep,gf,'+','.join(stars)+'\n')
+    for wave, spi, epi, gfi in \
+                     zip(x['wavelength'], x['species'], x['ep'], x['gf']):
+        line = str(wave)+','+ \
+               str(spi)+','+str(epi)+','+str(gfi)
+        there_is_data = False
+        ni = 0
+        for star in stars:
+            if wave < 0: #HFS
+                if prev_line.split(',')[4+ni] != '':
+                    line += ',0'
+                else:
+                    line += ','
+                ni += 1
+                continue
+            match_ww = np.where((abs(np.array(ww)-wave) < window))
+            match_sp = np.where(np.array(sp) == star)
+            ks = set(match_ww[0])&set(match_sp[0])
+            ews = [ew[k] for k in ks]
+            if len(ews) > 0:
+                line += ','+str(round(1000*np.mean(ews),1))
+                there_is_data = True
+                if len(ews) > 1:
+                    mews = 1000*np.mean(ews)
+                    sews = 1000*np.std(ews)
+                    err_ews = 100*sews/mews
+                    print( '{0:20s} {1:.2f} {2:5.1f} {3:5.1f} {4:5.1f}'.format(
+                            star, round(wave,2), round(mews,1),
+                            round(sews,1), round(err_ews, 1), len(ews)) )
+            else:
+                line += ','
+            prev_line = line
+        if there_is_data or wave < 0:
+            if (''.join(line.split(',')[4:]) != ''):
+                f.write(line+'\n')
+    f.close()
+    logger.info('Output file: '+file_out)
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+               description='reads an IRAF splot.log file and puts EW '+\
+                           'measurements into a CSV file')
+    parser.add_argument('file_in', help='the splot.log file')
+    parser.add_argument('template', help='a template line list (txt format)')
+    parser.add_argument('file_out', help='output CSV file')
+    parser.add_argument('-w', '--window', default=0.1, type=float,\
+                        help='wavelength window to search for lines')
+    args = parser.parse_args()
+    main(args.file_in, args.template, args.file_out, args.window)
