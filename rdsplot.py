@@ -18,7 +18,7 @@ from astropy.io import ascii
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 def main(file_in, template, file_out, window=0.1):
     logger.info('Reading input file: '+file_in)
@@ -39,7 +39,7 @@ def main(file_in, template, file_out, window=0.1):
                 ew.append(float(line[33:40].strip(' ')))
     f.close()
 
-    x = ascii.read(template, Reader=ascii.FixedWidth)
+    x = ascii.read(template)
 
     stars = sorted(set(sp))
     f = open(file_out, 'w')
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                description='reads an IRAF splot.log file and puts EW '+\
                            'measurements into a CSV file')
     parser.add_argument('file_in', help='the splot.log file')
-    parser.add_argument('template', help='a template line list (txt format)')
+    parser.add_argument('template', help='a template line list')
     parser.add_argument('file_out', help='output CSV file')
     parser.add_argument('-w', '--window', default=0.1, type=float,\
                         help='wavelength window to search for lines')
