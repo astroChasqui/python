@@ -3,7 +3,7 @@
 
 splot.log should be the result of many EW measurements
 file_in: your splot.log file
-template: a line list in MOOG format that will be used as template to search
+template: a csv line-list that will be used as template to search
 for values in splot.log file
 file_out: a csv file with the results of the search
 window=0.1: wavelength window to look for lines (0.1 A is the default)
