@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import c10teff
 from astropy.io import ascii
+import os
+
 
 def main(color, value, feh):
     #c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/'+\
