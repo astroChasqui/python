@@ -5,8 +5,6 @@ import os
 
 
 def main(color, value, feh):
-    #c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/'+\
-    #                      'ColorTeff/c10teff.csv')
     path = os.path.dirname(os.path.realpath(__file__))
     c10_coef  = ascii.read(os.path.join(path, 'c10teff.csv'))
 
