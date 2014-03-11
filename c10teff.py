@@ -4,6 +4,7 @@ import numpy as np
 from astropy.io import ascii
 import platform
 import logging
+import os
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -15,10 +16,13 @@ def many(infile, outfile):
     One column of input file must have 'id' as header
     """
 
-    if platform.system() == 'Windows':
-        c10_coef = ascii.read('C:\Users\Ivan\Dropbox\Code\python\q2\Data\ColorTeff\c10teff.csv')
-    if platform.system() == 'Linux':
-        c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/ColorTeff/c10teff.csv')
+    #if platform.system() == 'Windows':
+    #    c10_coef = ascii.read('C:\Users\Ivan\Dropbox\Code\python\q2\Data\ColorTeff\c10teff.csv')
+    #if platform.system() == 'Linux':
+    #    c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/ColorTeff/c10teff.csv')
+
+    path = os.path.dirname(os.path.realpath(__file__))
+    c10_coef  = ascii.read(os.path.join(path, 'c10teff.csv'))
 
     obs = asciitable.read(infile)
     k_colors = list(set(obs.dtype.names) & set(c10_coef['color']))

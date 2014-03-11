@@ -3,8 +3,11 @@ import c10teff
 from astropy.io import ascii
 
 def main(color, value, feh):
-    c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/'+\
-                          'ColorTeff/c10teff.csv')
+    #c10_coef = ascii.read('/home/ivan/Dropbox/Code/python/q2/Data/'+\
+    #                      'ColorTeff/c10teff.csv')
+    path = os.path.dirname(os.path.realpath(__file__))
+    c10_coef  = ascii.read(os.path.join(path, 'c10teff.csv'))
+
     res = c10teff.one(color, value, feh, c10_coef)
     if res != None:
         print(res[0])
