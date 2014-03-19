@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot
+pyplot.ioff()
 import q2
 
 def main(Star):
@@ -7,6 +11,7 @@ def main(Star):
     sp.smooth_window_len_mv = 11
     sp.smooth_window_len_r = 7
     pp = q2.yypars.PlotPars()
+    pp.directory = Star.directory
     q2.yypars.solve_one(Star, sp, pp)
     print(Star.name)
     print("-"*len(Star.name))
@@ -36,4 +41,6 @@ if __name__ == '__main__':
     parser.add_argument('err_logg', help='error', type=float)
     parser.add_argument('feh', help='iron abundance', type=float)
     parser.add_argument('err_feh', help='error', type=float)
+    parser.add_argument('-d', '--directory', default='',
+                        help='where figures are saved')
     main(parser.parse_args())
