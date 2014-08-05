@@ -43,7 +43,7 @@ def main(path, rvstd):
         fname = spectra[j][0]
         fname_rv0 = path+"_rv0/"+ \
                     fname[len(path)+1:].replace(".ec.fits", ".rv0.fits")
-        f.write("{0} {1:7.2f} {2:5.2f} {3:7.2f} {4} {5:.5f} {6}\n".
+        f.write("{0:30s} {1:7.2f} {2:5.2f} {3:7.2f} {4:36s} {5:.5f} {6}\n".
                 format(fname, mrv, emrv, rv_bary[j],
                        fname_rv0, rjd[j], obj[j][0].strip('"')))
     f.close

@@ -20,11 +20,14 @@ from astropy.io import ascii
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 
-def main(file_in, template, file_out, window=0.1):
+def main(file_in, template, file_out, window=0.1, inspect=False):
     logger.info('Reading input file: '+file_in)
     f = open(file_in, 'r')
     sp, ww, ew = [], [], []
-    for line in f.readlines():
+    frl = f.readlines()
+    for nline, line in zip(range(1, len(frl)), frl):
+        if inspect:
+            print ("Line {0}: {1}".format(nline, line))
         if '[' in line:
             xi = line.rfind('/')+1
             if xi == 0:
@@ -91,5 +94,7 @@ if __name__ == '__main__':
     parser.add_argument('file_out', help='output CSV file')
     parser.add_argument('-w', '--window', default=0.1, type=float,\
                         help='wavelength window to search for lines')
+    parser.add_argument('-i', '--inspect', action="store_true",\
+                        help='inspect input splot.log file (could be useful to figure out where in that file is the code crashing)')
     args = parser.parse_args()
-    main(args.file_in, args.template, args.file_out, args.window)
+    main(args.file_in, args.template, args.file_out, args.window, args.inspect)
