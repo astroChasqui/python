@@ -99,7 +99,7 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
 
     if(color not in c10_coef['color']):
         print('Calibration not available for color given.')
-        return None
+        return None, None
 
     err_msg = ''
     min_value = c10_coef['min_value'][c10_coef['color'] == color]
@@ -112,7 +112,7 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
         err_msg +=  '[Fe/H] is outside of limits of applicability'
     if err_msg != '':
         logger.warning(err_msg)
-        return None
+        return None, None
 
     a = []
     for i in range(6):
