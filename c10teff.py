@@ -2,7 +2,6 @@
 import irtools
 import numpy as np
 from astropy.io import ascii
-import platform
 import logging
 import os
 
@@ -138,6 +137,21 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
 def theta(a, value, feh):
     return 5040/(a[0]+a[1]*value+a[2]*value**2+a[3]*value*feh+
                  a[4]*feh+a[5]*feh**2)
+
+
+def get_c10coef():
+    """Silly function to read the C10 coefficients file.
+
+    Instead of running:
+    >>>c10_coef = asciitable.read('c10teff.csv')
+    You do:
+    >>>c10_coef = c10teff.get_c10coef()
+    
+    In this way you don't have to worry about where the file actually is,
+    as long as it is in the same directory where the c10teff.py code lives.
+    """
+    path = os.path.dirname(os.path.realpath(__file__))
+    return ascii.read(os.path.join(path, 'c10teff.csv'))
 
 
 if __name__ == "__main__":
