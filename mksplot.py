@@ -48,7 +48,7 @@ def main(linelist, speclist, file_out='getew.cl', directory=''):
         ns = str(len(sl['id']))
         logger.info(ns+" stars found in "+speclist)
     except:
-        logger.error('No "id" column in '+linelist+'.')
+        logger.error('No "id" column in '+speclist+'.')
         return
     f = open(file_out, 'w')
     for w in ll['wavelength']:
