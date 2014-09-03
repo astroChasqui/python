@@ -14,10 +14,9 @@ def many(infile, outfile):
 
     One column of input file must have 'id' as header
     """
-    path = os.path.dirname(os.path.realpath(__file__))
-    c10_coef  = ascii.read(os.path.join(path, 'c10teff.csv'))
+    c10_coef = c10teff.get_c10coef()
 
-    obs = asciitable.read(infile)
+    obs = ascii.read(infile)
     k_colors = list(set(obs.dtype.names) & set(c10_coef['color']))
     kc = ['teff_'+x for x in k_colors]
     more_keys = [prefix+elt for elt in kc for prefix in ('','err_') ]
@@ -28,8 +27,7 @@ def many(infile, outfile):
     n_stars = len(obs['id'])
 
     for color in k_colors:
-        tt = []
-        ett = []
+        tt, ett = [], []
         for i in range(n_stars):
             if obs[color][i] != '':
                 value = float(obs[color][i])
@@ -66,8 +64,6 @@ def many(infile, outfile):
         if len(tt) > 0:
             tv = irtools.wmean(tt, ett)
             teff.append(int(tv[0]))
-            #eteff.append(int(tv[1]))
-            #eteff.append(int(tv[2]))
             if tv[2] != None:
                 eteff.append(int(tv[1])+int(tv[2]))
             else:
@@ -78,22 +74,20 @@ def many(infile, outfile):
     res['teff_color'] = teff
     res['err_teff_color'] = eteff
 
-    #get rid of None s (asciitable can't handle them, apparently)
-    for k, v in res.iteritems():
-        for i in range(len(v)):
-          if v[i] is None:
-              res[k][i] = ''
+    ##get rid of None s (asciitable can't handle them, apparently)
+    #for k, v in res.iteritems():
+    #    for i in range(len(v)):
+    #      if v[i] is None:
+    #          res[k][i] = ''
 
-    asciitable.write(res, outfile, delimiter=',', names=res_keys)
-    #asciitable.write(res, outfile, delimiter=',',
-    #                 names=res_keys, fill_values = (None, '---') )
+    ascii.write(res, outfile, delimiter=',', names=res_keys)
 
 
 def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
     """Calculates Teff using Casagrande et al. (2010) calibrations.
 
     Example:
-    >>>c10_coef = asciitable.read('c10teff.csv')
+    >>>c10_coef = c10teff.get_c10coef()
     >>>c10teff.one('bv', 0.35, -0.15, c10_coef, err_value=0.01, err_feh=0.05)
     """
 
@@ -143,10 +137,10 @@ def get_c10coef():
     """Silly function to read the C10 coefficients file.
 
     Instead of running:
-    >>>c10_coef = asciitable.read('c10teff.csv')
+    >>>c10_coef = ascii.read('c10teff.csv')
     You do:
     >>>c10_coef = c10teff.get_c10coef()
-    
+
     In this way you don't have to worry about where the file actually is,
     as long as it is in the same directory where the c10teff.py code lives.
     """
