@@ -9,15 +9,16 @@ import os
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-def many(infile, outfile):
-    """Calculates Teff using Casagrande et al. (2010) calibrations.
+def many(infile, outfile, calibration="casagrande10"):
+    """Calculates Teff using the Alonso et al. (1996) or the Casagrande
+    et al. (2010) calibrations.
 
     One column of input file must have 'id' as header
     """
-    c10_coef = get_c10coef()
+    coef = get_coef(calibration)
 
     obs = ascii.read(infile)
-    k_colors = list(set(obs.dtype.names) & set(c10_coef['color']))
+    k_colors = list(set(obs.dtype.names) & set(coef['color']))
     kc = ['teff_'+x for x in k_colors]
     more_keys = [prefix+elt for elt in kc for prefix in ('','err_') ]
     res_keys = ['id', 'teff_color', 'err_teff_color']
@@ -40,7 +41,17 @@ def many(infile, outfile):
                 if obs['feh_in'][i] == '':
                     obs['feh_in'][i] = 0
                 feh = float(obs['feh_in'][i])
-                x = one(color, value, feh, c10_coef, err_value)
+                if 'err_feh_in' in obs.keys():
+                    err_feh = float(obs['err_feh_in'][i])
+                else:
+                    err_feh = 0.05
+                if color == 'by_' and 'c1' in obs.keys() \
+                   and calibration == 'alonso96':
+                    if obs['c1'][i] != "":
+                        x = one(color, value, feh, coef, err_value, err_feh,\
+                                c1=float(obs['c1'][i]))
+                else:
+                    x = one(color, value, feh, coef, err_value)
             else:
                 x = None
             if x:
@@ -83,23 +94,23 @@ def many(infile, outfile):
     ascii.write(res, outfile, delimiter=',', names=res_keys)
 
 
-def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
-    """Calculates Teff using Casagrande et al. (2010) calibrations.
+def one(color, value, feh, coef, err_value=0, err_feh=0, c1=None):
+    """Calculates Teff using a color-Teff calibration.
 
     Example:
-    >>>c10_coef = c10teff.get_c10coef()
-    >>>c10teff.one('bv', 0.35, -0.15, c10_coef, err_value=0.01, err_feh=0.05)
+    >>>coef = colorteff.get_coef('casagrande10')
+    >>>colorteff.one('bv', 0.35, -0.15, coef, err_value=0.01, err_feh=0.05)
     """
 
-    if(color not in c10_coef['color']):
+    if(color not in coef['color']):
         print('Calibration not available for color given.')
         return None, None
 
     err_msg = ''
-    min_value = c10_coef['min_value'][c10_coef['color'] == color]
-    max_value = c10_coef['max_value'][c10_coef['color'] == color]
-    min_feh = c10_coef['min_feh'][c10_coef['color'] == color]
-    max_feh = c10_coef['max_feh'][c10_coef['color'] == color]
+    min_value = coef['min_value'][coef['color'] == color]
+    max_value = coef['max_value'][coef['color'] == color]
+    min_feh = coef['min_feh'][coef['color'] == color]
+    max_feh = coef['max_feh'][coef['color'] == color]
     if value < min_value or value > max_value:
         err_msg += 'color value is outside of limits of applicability'
     if feh < min_feh or feh > max_feh:
@@ -110,8 +121,11 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
 
     a = []
     for i in range(6):
-        a.append(c10_coef['a'+str(i)][c10_coef['color'] == color])
+        a.append(coef['a'+str(i)][coef['color'] == color])
     teff = theta(a, value, feh)
+    if 'ac1' in coef.keys() and color == 'by_' and c1 != None:
+        ac1 = coef['ac1'][coef['color'] == color]
+        teff = theta(a, value, feh, ac1, c1)
 
     etv = etf = 0
     if err_value > 0:
@@ -122,32 +136,45 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
         tmf = theta(a, value, feh-err_feh)
         tpf = theta(a, value, feh+err_feh)
         etf = (tmf-tpf)/2
-    err_clbr = c10_coef['err_clbr'][c10_coef['color'] == color]
+    err_clbr = coef['err_clbr'][coef['color'] == color]
     err_teff = np.sqrt(etv**2+etf**2+err_clbr**2)
 
     return int(teff), int(err_teff)
 
 
-def theta(a, value, feh):
-    return 5040/(a[0]+a[1]*value+a[2]*value**2+a[3]*value*feh+
-                 a[4]*feh+a[5]*feh**2)
+def theta(a, value, feh, ac1=None, c1=None):
+    if ac1 and c1:
+        return 5040/(a[0]+a[1]*value+a[2]*value**2+a[3]*value*feh+
+                     a[4]*feh+a[5]*feh**2+ac1*value*c1)
+    else:
+        return 5040/(a[0]+a[1]*value+a[2]*value**2+a[3]*value*feh+
+                     a[4]*feh+a[5]*feh**2)
 
-
-def get_c10coef():
-    """Silly function to read the C10 coefficients file.
+def get_coef(calibration):
+    """Silly function to read the color-Teff coefficients file.
 
     Instead of running:
-    >>>c10_coef = ascii.read('c10teff.csv')
+    >>>c10_coef = ascii.read('casagrande10.csv')
     You do:
-    >>>c10_coef = c10teff.get_c10coef()
+    >>>c10_coef = c10teff.get_c10coef('casagrande10')
 
     In this way you don't have to worry about where the file actually is,
-    as long as it is in the same directory where the c10teff.py code lives.
+    as long as it is inside the Data directory relative to where the
+    colorteff.py code lives.
     """
     path = os.path.dirname(os.path.realpath(__file__))
-    return ascii.read(os.path.join(path, 'c10teff.csv'))
+    return ascii.read(os.path.join(path, 'Data', calibration+'.csv'))
 
 
-if __name__ == "__main__":
-    import sys
-    many(sys.argv[1], sys.argv[2])
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+               description='use color-Teff calibrations to '+\
+                           'calculate Teff of a dwarf or subgiant star from'+\
+                           'its measured colors')
+    parser.add_argument('infile', help='input file (csv)')
+    parser.add_argument('outfile', help='output file (csv)')
+    parser.add_argument('-c', '--calib', default="casagrande10",\
+                        help='alonso96 or casagrande10 (default)')
+    args = parser.parse_args()
+    many(args.infile, args.outfile, args.calib)
