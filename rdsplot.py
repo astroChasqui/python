@@ -37,9 +37,10 @@ def main(file_in, template, file_out, window=0.1, inspect=False):
             spectrum = line[xi:xf]
         if len(line) > 1 and line[4:10] != 'center' and '[' not in line \
            and line.replace(" ", "") != "\n":
+                linex = line.split()
                 sp.append(spectrum)
-                ww.append(float(line[0:10].strip(' ')))
-                ew.append(float(line[33:40].strip(' ')))
+                ww.append(float(linex[0]))
+                ew.append(float(linex[3]))
     f.close()
 
     x = ascii.read(template)
@@ -47,6 +48,11 @@ def main(file_in, template, file_out, window=0.1, inspect=False):
     stars = sorted(set(sp))
     f = open(file_out, 'w')
     f.write('wavelength,species,ep,gf,'+','.join(stars)+'\n')
+
+    print("Multiple measurements of the same line on the same star will "+\
+          "be listed here:")
+    print("id                wave     ew  stdev %err  n")
+    print("--------------- ------- -----  ----- ---- --")
     for wave, spi, epi, gfi in \
                      zip(x['wavelength'], x['species'], x['ep'], x['gf']):
         line = str(wave)+','+ \
@@ -72,9 +78,10 @@ def main(file_in, template, file_out, window=0.1, inspect=False):
                     mews = 1000*np.mean(ews)
                     sews = 1000*np.std(ews)
                     err_ews = 100*sews/mews
-                    print( '{0:20s} {1:.2f} {2:5.1f} {3:5.1f} {4:5.1f}'.format(
-                            star, round(wave,2), round(mews,1),
-                            round(sews,1), round(err_ews, 1), len(ews)) )
+                    print( '{0:15s} {1:.2f} {2:5.1f} {3:5.1f} {4:5.1f} {5:2d}'.
+                          format(star, round(wave,2), round(mews,1),
+                                 round(sews,1), round(err_ews, 1), len(ews))
+                                 )
             else:
                 line += ','
             prev_line = line
