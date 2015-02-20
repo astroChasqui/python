@@ -31,16 +31,26 @@ def many(infile, outfile):
         for i in range(n_stars):
             if obs[color][i] != '':
                 value = float(obs[color][i])
+
+                ebv = float(obs['ebv'][i])
+
+                ebv = 0
+                if 'ebv' in obs.dtype.names:
+                    if obs['ebv'][i] == '':
+                        ebv = 0
+                    else:
+                        ebv = float(obs['ebv'][i])
+
                 err_value = 0
                 if 'err_'+color in obs.dtype.names:
                     if obs['err_'+color][i] == '':
                         err_value = 0
                     else:
                         err_value = float(obs['err_'+color][i])
-                if obs['feh_in'][i] == '':
-                    obs['feh_in'][i] = 0
-                feh = float(obs['feh_in'][i])
-                x = one(color, value, feh, c10_coef, err_value)
+                if obs['feh'][i] == '':
+                    obs['feh'][i] = 0
+                feh = float(obs['feh'][i])
+                x = one(color, value, feh, c10_coef, ebv=ebv, err_value=err_value)
             else:
                 x = None
             if x:
@@ -83,12 +93,12 @@ def many(infile, outfile):
     ascii.write(res, outfile, delimiter=',', names=res_keys)
 
 
-def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
+def one(color, value, feh, c10_coef, ebv=0, err_value=0, err_feh=0):
     """Calculates Teff using Casagrande et al. (2010) calibrations.
 
     Example:
     >>>c10_coef = c10teff.get_c10coef()
-    >>>c10teff.one('bv', 0.35, -0.15, c10_coef, err_value=0.01, err_feh=0.05)
+    >>>c10teff.one('bv', 0.35, -0.15, c10_coef, ebv=0, err_value=0.01, err_feh=0.05)
     """
 
     if(color not in c10_coef['color']):
@@ -100,6 +110,11 @@ def one(color, value, feh, c10_coef, err_value=0, err_feh=0):
     max_value = c10_coef['max_value'][c10_coef['color'] == color]
     min_feh = c10_coef['min_feh'][c10_coef['color'] == color]
     max_feh = c10_coef['max_feh'][c10_coef['color'] == color]
+    
+    if ebv > 0:
+        k_ebv = c10_coef['k'][c10_coef['color'] == color]
+        value -= k_ebv * ebv
+    
     if value < min_value or value > max_value:
         err_msg += 'color value is outside of limits of applicability'
     if feh < min_feh or feh > max_feh:
