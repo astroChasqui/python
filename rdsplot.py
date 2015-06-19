@@ -14,6 +14,7 @@ __email__ = 'ivan@astro.as.utexas.edu'
 
 import logging
 import numpy as np
+from astropy.io import ascii
 
 
 logger = logging.getLogger(__name__)
