@@ -25,7 +25,7 @@ def main(file_in, template, file_out, window=0.1, inspect=False):
     f = open(file_in, 'r')
     sp, ww, ew = [], [], []
     frl = f.readlines()
-    for nline, line in zip(range(1, len(frl)), frl):
+    for nline, line in zip(range(1, len(frl)+1), frl):
         if inspect:
             print ("Line {0}: {1}".format(nline, line))
         if '[' in line:
