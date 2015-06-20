@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-"""Reads splot.log file from IRAF to create master csv linelist
+"""Reads splot.log file from IRAF to create a CSV linelist
 
 splot.log should be the result of many EW measurements
 file_in: your splot.log file
-template: a csv line-list that will be used as template to search
-for values in splot.log file
-file_out: a csv file with the results of the search
+template: a CSV linelist that will be used as template to search for values
+in splot.log file
+file_out: a CSV file with the results of the search
 window=0.1: wavelength window to look for lines (0.1 A is the default)
 """
 __author__ = 'Ivan Ramirez (UT Austin)'
@@ -14,8 +14,7 @@ __email__ = 'ivan@astro.as.utexas.edu'
 
 import logging
 import numpy as np
-from astropy.io import ascii
-
+from pandas import read_csv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
@@ -43,7 +42,7 @@ def main(file_in, template, file_out, window=0.1, inspect=False):
                 ew.append(float(linex[3]))
     f.close()
 
-    x = ascii.read(template)
+    x = read_csv(template)
 
     stars = sorted(set(sp))
     f = open(file_out, 'w')

@@ -8,28 +8,28 @@ extension).
 By default, a getew.cl file is created, which can be called from IRAF
 as cl> cl < getew.cl. That will show you all lines, one by one, for each
 star, so you can measure EWs quickly and save them into the splot.log
-file. Then you can use rdsplot.py to create a CVS file with your EW 
+file. Then you can use rdsplot.py to create a CSV file with your EW 
 measurements. You can change the name of getew.cl to anything you want
 with the file_out argument.
 
 The directory argument is used to specify the directory where the
 spectra are currently located. By default, it is assumed that the
-spectra is in the working folder.
+spectra are in the working folder.
 """
 __author__ = 'Ivan Ramirez (UT Austin)'
 __email__ = 'ivan@astro.as.utexas.edu'
 
 
-from astropy.io import ascii
 import os
 import logging
+from pandas import read_csv
 
 logger = logging.getLogger(__name__)
-logging.basicConfig( level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 def main(linelist, speclist, file_out='getew.cl', directory=''):
     try:
-        ll = ascii.read(linelist)
+        ll = read_csv(linelist)
     except:
         logger.error('Could not read file '+linelist+'.')
         return
@@ -40,7 +40,7 @@ def main(linelist, speclist, file_out='getew.cl', directory=''):
         logger.error('No "wavelength" column in '+linelist+'.')
         return
     try:
-        sl = ascii.read(speclist)
+        sl = read_csv(speclist)
     except:
         logger.error('Could not read file '+speclist+'.')
         return
